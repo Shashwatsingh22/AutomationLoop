@@ -1,0 +1,20 @@
+- hosts: docker
+  tasks:
+  
+  - package:
+      name: "php"
+      state: present      
+
+  - copy:
+     dest: "/var/www/html/index.php"
+     src: "index.php"
+
+  - service:
+     name: "httpd"
+     state: started
+     enabled: yes
+  
+  - firewalld:
+     port: 80/tcp
+     state: enabled
+     immediate: yes    

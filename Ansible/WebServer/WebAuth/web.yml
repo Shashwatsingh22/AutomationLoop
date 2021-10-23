@@ -1,0 +1,71 @@
+- hosts: webserver
+
+  tasks:
+    - name: "Creating an Folder for Mount to CD(iso) !!"
+      file:
+          state: directory
+          path: "/mount"
+    
+    - name: "Now Mounting !!"
+      mount:
+          src: "/dev/cdrom"
+          path: "/mount"
+          state: mounted
+          fstype: "iso9660"
+    
+    - name: "Configuring the Yum Repo from AppStream!!"
+      yum_repository:
+          baseusrl: "/mount/AppStream"
+          name: "dvd1"
+          description: "AppStream"
+          gpgcheck: no
+
+    - name: "Conf the yum Repo from BaseOS !!"
+      yum_repository:
+          baseurl: "/mount/AppStream"
+          name: "dvd2"
+          description: "BaseOS"
+          gpgcheck: no
+
+    - name: "Now Installing the httpd...."
+      package:
+          name: "httpd"
+          state: present
+    
+    - name: "Adding SOme COntent to the Html file !!"
+      copy:
+          path: "/var/www/html/index.html"
+          content: "Hii Configured With AutomationLoop"      
+
+    - name: "Enabling the Auth..."
+      replace:
+          path: "/etc/httpd/conf/httpd.conf"
+          regexp: "AllowOveride None"
+          replace: "AllowOveride AuthConfig"
+      notify: restart httpd     
+
+    - name: "Creating an file for httpd service so that it can know about the credentials !!"
+      copy:
+          dest: "/var/www/html/.htaccess"
+          src: ".htaccess"
+    
+    - name: "Installing an lib for httpdpasswd !!"
+      pip:
+          name: "passlib"
+
+    - name: "Setting Up the Username and Password !!"      
+      htpasswd:  
+          path: "/etc/www.passwd"
+          name: "{{username}}"
+          password: "{{pass}}"
+
+    - name: "Now Starting the Service(As there is no new changes in Conf file) !!"
+      service:
+          name: "httpd"
+          state: "started"
+   
+  handlers:        
+    - name: restart httpd
+      service:
+         name: "httpd"
+         state: "restarted"       

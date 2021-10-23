@@ -1,0 +1,50 @@
+- hosts: all
+  tasks:
+
+  - file:
+     state: directory
+     path: "/appdvd"
+
+  - mount:
+     src: "/dev/cdrom"
+     path: "/mount"
+     state: mounted
+     fstype: "iso9660"
+
+  - yum_repository:
+     baseurl: "/mount/AppStream"
+     name: "RepO1"
+     description: "This is the configuration for the Yum !"
+     gpgcheck: no
+
+  - yum_repository:
+     baseurl: "/mount/BaseOS"
+     name: "RepO2"
+     description: "This is the configuration for the Yum !"
+     gpgcheck: no
+  
+  - package:
+     name: "httpd"
+     state: present
+  
+  - file:
+     state: directory
+     path: "{{foldName}}"
+
+  - copy:
+     dest: "/etc/httpd/conf.d/new.conf"
+     src: "new.conf"   
+  
+  - copy:
+     dest: "/var/www/NewDir/index.html"
+     content: "Welcome TO Coding Pathshala \n"   
+
+  - service:
+     name: "httpd"
+     state: restarted
+     enabled: yes
+  
+  - firewalld:
+     port: "{{port}}"
+     state: enabled
+     immediate: yes   
