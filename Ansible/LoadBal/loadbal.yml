@@ -1,0 +1,43 @@
+- hosts: loadb
+  
+  tasks:
+    - name: "Creating an Folder for Mount to CD(iso) !!"
+      file:
+         state: directory
+         path: "/mount"
+    
+    - name: "Now Mounting !!"
+      mount:
+          src: "/dev/cdrom"
+          path: "/mount"
+          state: mounted
+          fstype: "iso9660"
+    
+    - name: "Configuring the Yum Repo from AppStream!!"
+      yum_repository:
+          baseusrl: "/mount/AppStream"
+          name: "dvd1"
+          description: "AppStream"
+          gpgcheck: no
+
+    - name: "Conf the yum Repo from BaseOS !!"
+      yum_repository:
+          baseurl: "/mount/AppStream"
+          name: "dvd2"
+          description: "BaseOS"
+          gpgcheck: no
+    
+   - name: "Installing Haproxy Software !!"
+     package:
+         name: "haproxy"
+         state: present
+
+   - name: "Configuring the Haproxy File ...."
+     template:
+             dest: "/etc/haproxy/haproxy.cfg"
+             src: "haproxy.cfg"     
+   
+   - name: "starting the service...."
+     service:
+             name: "haproxy"
+             state: restarted
