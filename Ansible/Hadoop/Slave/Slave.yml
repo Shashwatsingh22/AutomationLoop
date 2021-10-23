@@ -1,0 +1,62 @@
+- hosts: slave
+  
+
+  tasks:
+ 
+  - name: "Transfering the SOftware Hadoop !!"
+    copy: 
+     dest: "/root/Hadoop_Setup/hadoop-1.2.1-1.x86_64.rpm"
+     src: hadoop-1.2.1-1.x86_64.rpm
+  
+  - name: "Transfering the Software Java !!"
+    copy:
+     dest: "/root/Hadoop_Setup/jdk-8u171-linux-x64.rpm"
+     src: jdk-8u171-linux-x64.rpm
+
+  - name: "Checking that Hadoop is INstalled or NOt !!"
+    command: "rpm -q hadoop"
+    register: hadoop
+    ignore_errors: yes
+
+  - name: "CHecking the Java is Installed or Not !!"
+    command: "java -version"
+    register: java
+    ignore_errors: yes   
+
+  - name: "Installing the JAVA !!"
+    command: "rpm -ivh jdk-8u171-linux-x64.rpm"
+    ignore_errors: yes
+    when: java.rc != 0
+
+  - name: "Installing the Hadoop !!"
+    command: "rpm -ivh hadoop-1.2.1-1.x86_64.rpm --force"
+    ignore_errors: yes
+    when: hadoop.rc != 0
+
+  - name: "Configuring the Conf file hdfs-site.xml  !!"
+    blockinfile:
+      path: "/etc/hadoop/hdfs-site.xml"
+      insertafter: "<configuration>"
+      block: |
+            <property>
+            <name>dfs.data.dir </name>
+            <value> /dn </value>
+            </property>
+  
+  - name: "Configuring the Conf file core-site.xml  !!"
+    blockinfile:
+      path: "/etc/hadoop/core-site.xml"
+      insertafter: "<configuration>"
+      block: |
+            <property>
+            <name>fs.default.name</name>
+            <value> hdfs://{{groups['slave'][0]}}:{{port_num_for_hdfs}} </value>
+            </property>  
+
+  - name: "Creating the DIr in the Master NOde !!"
+    file:
+     state: directory
+     path: /nn
+
+  - name: "Starting the Service !!"
+    command: "hadoop-daemon.sh start datanode"
